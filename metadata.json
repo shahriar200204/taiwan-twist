@@ -1,0 +1,6 @@
+{
+  "name": "TAIWAN X FOODEX — Smart Multi-Branch POS",
+  "description": "Enterprise-grade Multi-Branch Desktop Point of Sale & Business Management System featuring real-time Firestore sync, role-based access control, barcode search, stock transfers, and automated financial reporting.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

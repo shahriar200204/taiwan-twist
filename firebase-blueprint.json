@@ -1,0 +1,288 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with role-based access and optional branch assignment",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["super_admin", "branch_admin", "cashier"] },
+        "branchId": { "type": "string" },
+        "branchName": { "type": "string" },
+        "phone": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "email", "displayName", "role", "createdAt"]
+    },
+    "Branch": {
+      "title": "Branch",
+      "description": "Physical restaurant/store branch outlet",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "managerName": { "type": "string" },
+        "taxRate": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "code", "address", "phone", "taxRate", "createdAt"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product menu category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "icon": { "type": "string" },
+        "color": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"] }
+      },
+      "required": ["id", "name", "code"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Master catalog product or menu item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "categoryName": { "type": "string" },
+        "barcode": { "type": "string" },
+        "sku": { "type": "string" },
+        "costPrice": { "type": "number" },
+        "sellingPrice": { "type": "number" },
+        "image": { "type": "string" },
+        "isAvailable": { "type": "boolean" },
+        "minStockAlert": { "type": "number" },
+        "unit": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "categoryId", "barcode", "sku", "costPrice", "sellingPrice", "isAvailable", "createdAt"]
+    },
+    "BranchInventoryItem": {
+      "title": "BranchInventoryItem",
+      "description": "Inventory stock allocation per branch and product",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "branchId": { "type": "string" },
+        "branchName": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "sku": { "type": "string" },
+        "barcode": { "type": "string" },
+        "categoryName": { "type": "string" },
+        "sellingPrice": { "type": "number" },
+        "costPrice": { "type": "number" },
+        "currentStock": { "type": "number" },
+        "minStockAlert": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "branchId", "productId", "currentStock", "updatedAt"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "Point of sale order transaction invoice record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "branchId": { "type": "string" },
+        "branchName": { "type": "string" },
+        "cashierId": { "type": "string" },
+        "cashierName": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "itemCount": { "type": "number" },
+        "subtotal": { "type": "number" },
+        "discountType": { "type": "string" },
+        "discountValue": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "taxRate": { "type": "number" },
+        "taxAmount": { "type": "number" },
+        "grandTotal": { "type": "number" },
+        "totalCost": { "type": "number" },
+        "netProfit": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "paymentStatus": { "type": "string" },
+        "paidAmount": { "type": "number" },
+        "changeAmount": { "type": "number" },
+        "dueAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["completed", "refunded", "cancelled"] },
+        "createdAt": { "type": "string" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["id", "invoiceNumber", "branchId", "cashierId", "grandTotal", "paymentMethod", "status", "createdAt"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer ledger and contact record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "totalPurchases": { "type": "number" },
+        "totalOrders": { "type": "number" },
+        "dueAmount": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "phone", "totalPurchases", "dueAmount", "createdAt"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Branch operating cost outflow transaction",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "amount": { "type": "number" },
+        "branchId": { "type": "string" },
+        "branchName": { "type": "string" },
+        "date": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "title", "category", "amount", "branchId", "date", "createdAt"]
+    },
+    "StockTransfer": {
+      "title": "StockTransfer",
+      "description": "Inter-branch stock transfer workflow record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "transferNumber": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "productSku": { "type": "string" },
+        "quantity": { "type": "number" },
+        "sourceBranchId": { "type": "string" },
+        "sourceBranchName": { "type": "string" },
+        "destinationBranchId": { "type": "string" },
+        "destinationBranchName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "completed", "cancelled"] },
+        "createdBy": { "type": "string" },
+        "createdByName": { "type": "string" },
+        "transferDate": { "type": "string" }
+      },
+      "required": ["id", "transferNumber", "productId", "quantity", "sourceBranchId", "destinationBranchId", "status", "transferDate"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable administrative and POS event log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "action": { "type": "string" },
+        "details": { "type": "string" },
+        "performedBy": { "type": "string" },
+        "performedByName": { "type": "string" },
+        "role": { "type": "string" },
+        "branchId": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "action", "details", "performedBy", "timestamp"]
+    },
+    "BusinessSettings": {
+      "title": "BusinessSettings",
+      "description": "Global enterprise restaurant configuration",
+      "type": "object",
+      "properties": {
+        "businessName": { "type": "string" },
+        "tagline": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "currencySymbol": { "type": "string" },
+        "defaultTaxRate": { "type": "number" },
+        "receiptFooter": { "type": "string" }
+      },
+      "required": ["businessName", "currencySymbol", "defaultTaxRate"]
+    },
+    "BackupSnapshot": {
+      "title": "BackupSnapshot",
+      "description": "Daily and manual point-in-time document backup snapshot of sales and inventory collections",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "epoch": { "type": "number" },
+        "type": { "type": "string", "enum": ["daily_snapshot", "manual_snapshot"] },
+        "salesCount": { "type": "number" },
+        "inventoryCount": { "type": "number" },
+        "totalSalesVolume": { "type": "number" },
+        "sales": { "type": "array" },
+        "inventory": { "type": "array" },
+        "status": { "type": "string", "enum": ["success", "failed"] },
+        "triggeredBy": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "date", "timestamp", "epoch", "type", "salesCount", "inventoryCount", "sales", "inventory", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profiles and credentials"
+    },
+    "/branches/{branchId}": {
+      "schema": { "$ref": "#/entities/Branch" },
+      "description": "Store branches and outlets"
+    },
+    "/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Product categories"
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Master products menu"
+    },
+    "/inventory/{inventoryId}": {
+      "schema": { "$ref": "#/entities/BranchInventoryItem" },
+      "description": "Per-branch stock inventory items"
+    },
+    "/sales/{saleId}": {
+      "schema": { "$ref": "#/entities/Sale" },
+      "description": "Order sales invoices"
+    },
+    "/customers/{customerId}": {
+      "schema": { "$ref": "#/entities/Customer" },
+      "description": "Customer dues and profiles"
+    },
+    "/expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/Expense" },
+      "description": "Operating expenses"
+    },
+    "/stockTransfers/{transferId}": {
+      "schema": { "$ref": "#/entities/StockTransfer" },
+      "description": "Inter-branch stock transfers"
+    },
+    "/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Security and transaction audit logs"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/BusinessSettings" },
+      "description": "Global enterprise settings"
+    },
+    "/backups/{backupId}": {
+      "schema": { "$ref": "#/entities/BackupSnapshot" },
+      "description": "Daily document backup snapshots of sales and inventory collections"
+    }
+  }
+}

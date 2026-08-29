@@ -1,0 +1,126 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email == 'shahriar2002hossain@gmail.com' ||
+        request.auth.token.email == 'shahriarhossainforpc@gmail.com' ||
+        request.auth.token.email == 'admin@taiwanxfoodex.com' ||
+        request.auth.token.role == 'super_admin' ||
+        request.auth.token.admin == true ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin')
+      );
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isBranchAdmin(branchId) {
+      return isAuthenticated() && (
+        isSuperAdmin() || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         getUserData().role == 'branch_admin' && 
+         getUserData().branchId == branchId)
+      );
+    }
+
+    function isBranchStaff(branchId) {
+      return isAuthenticated() && (
+        isSuperAdmin() || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         (getUserData().branchId == branchId || isSuperAdmin()))
+      );
+    }
+
+    // Default catch-all
+    match /{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Users collection (RBAC)
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Branches collection
+    match /branches/{branchId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    // Master Product Catalog
+    match /products/{productId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Categories
+    match /categories/{categoryId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Branch-level Inventory
+    match /inventory/{inventoryId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Sales & POS Receipts
+    match /sales/{saleId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Customers & Credit Dues
+    match /customers/{customerId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Operating Expenses
+    match /expenses/{expenseId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Inter-Branch Stock Transfers Workflow
+    match /stockTransfers/{transferId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Business & Receipt Settings
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    // Audit Logs (Immutable by standard users)
+    match /auditLogs/{logId} {
+      allow read, create: if true;
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Daily & Point-in-time Document Backups
+    match /backups/{backupId} {
+      allow read, create, update: if true;
+      allow delete: if isSuperAdmin();
+    }
+  }
+}

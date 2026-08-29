@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@layer utilities {
+  /* Custom scrollbar for POS item grids and lists */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #090d16;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 9999px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Print styles for thermal POS receipt and kitchen token */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-receipt, #printable-receipt *,
+  #printable-kitchen-token, #printable-kitchen-token *,
+  #thermal-preview-container, #thermal-preview-container * {
+    visibility: visible;
+  }
+  #printable-receipt, #printable-kitchen-token, #thermal-preview-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: 100% !important;
+    margin: 0;
+    padding: 4px;
+    color: black !important;
+    background: white !important;
+  }
+  header, aside, button, nav, .print\:hidden {
+    display: none !important;
+  }
+}
