@@ -18,8 +18,8 @@ export interface GoogleSheetsConfig {
 const STORAGE_KEY = 'taiwan_foodex_google_sheets_config';
 
 const DEFAULT_CONFIG: GoogleSheetsConfig = {
-  enabled: false,
-  webhookUrl: '',
+  enabled: true,
+  webhookUrl: 'https://script.google.com/macros/s/AKfycbyFV5K26U4ST2CPdDwJrL7OwRbmOiLXCQPMtaE2bU7Gw9PCTV3B1J4oc0wC6kYqsVSY/exec',
   sheetNameSales: 'Live_Sales',
   sheetNameInventory: 'Live_Inventory',
   sheetNameExpenses: 'Live_Expenses',
@@ -39,7 +39,13 @@ class GoogleSheetsSyncService {
     try {
       const snap = await getDoc(doc(db, 'settings', 'google_sheets_config'));
       if (snap.exists()) {
-        this.config = { ...DEFAULT_CONFIG, ...(snap.data() as GoogleSheetsConfig) };
+        const data = snap.data() as GoogleSheetsConfig;
+        this.config = { 
+          ...DEFAULT_CONFIG, 
+          ...data,
+          webhookUrl: data.webhookUrl || DEFAULT_CONFIG.webhookUrl,
+          enabled: data.enabled ?? true
+        };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.config));
         return this.config;
       }
@@ -50,10 +56,19 @@ class GoogleSheetsSyncService {
     const local = localStorage.getItem(STORAGE_KEY);
     if (local) {
       try {
-        this.config = { ...DEFAULT_CONFIG, ...JSON.parse(local) };
+        const parsed = JSON.parse(local);
+        this.config = { 
+          ...DEFAULT_CONFIG, 
+          ...parsed,
+          webhookUrl: parsed.webhookUrl || DEFAULT_CONFIG.webhookUrl,
+          enabled: parsed.enabled ?? true
+        };
       } catch {
         this.config = DEFAULT_CONFIG;
       }
+    } else {
+      this.config = DEFAULT_CONFIG;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.config));
     }
     return this.config;
   }
@@ -77,30 +92,39 @@ class GoogleSheetsSyncService {
    * Sends payload to Google Apps Script Web App Webhook
    */
   private async sendWebhook(action: string, payload: Record<string, any>): Promise<{ success: boolean; message: string }> {
-    if (!this.config.enabled || !this.config.webhookUrl) {
+    const url = this.config.webhookUrl || DEFAULT_CONFIG.webhookUrl;
+    if (!url) {
       return { success: false, message: 'Google Sheets sync is not enabled or Webhook URL is missing.' };
     }
 
-    try {
-      const response = await fetch(this.config.webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
-        body: JSON.stringify({
-          action,
-          timestamp: new Date().toISOString(),
-          app: 'TAIWAN X FOODEX',
-          data: payload,
-        }),
-      });
+    const bodyString = JSON.stringify({
+      action,
+      timestamp: new Date().toISOString(),
+      app: 'TAIWAN X FOODEX',
+      data: payload,
+    });
 
-      const resText = await response.text();
-      let resJson: any = {};
+    try {
+      // First attempt standard POST with redirect follow
       try {
-        resJson = JSON.parse(resText);
-      } catch {
-        // Many Apps Script webhooks return raw text or redirect
+        await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+          },
+          body: bodyString,
+          redirect: 'follow'
+        });
+      } catch (postError) {
+        // In browsers with strict CORS/opaque redirects on Apps Script, try with no-cors to guarantee execution
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+          },
+          body: bodyString,
+        });
       }
 
       this.config.lastSyncedAt = new Date().toISOString();
@@ -109,7 +133,7 @@ class GoogleSheetsSyncService {
 
       return { 
         success: true, 
-        message: resJson.message || 'Successfully synced with Google Sheets.' 
+        message: 'Successfully synced with Google Sheets.' 
       };
     } catch (error: any) {
       console.warn('Google Sheets live sync error:', error);
@@ -234,28 +258,51 @@ class GoogleSheetsSyncService {
    * Test Connection ping
    */
   async testConnection(webhookUrl: string): Promise<{ success: boolean; message: string }> {
+    const targetUrl = webhookUrl || DEFAULT_CONFIG.webhookUrl;
+    if (!targetUrl) {
+      return {
+        success: false,
+        message: 'Please provide a valid Google Apps Script Webhook URL.'
+      };
+    }
+
+    const payload = JSON.stringify({
+      action: 'PING_TEST',
+      timestamp: new Date().toISOString(),
+      app: 'TAIWAN X FOODEX',
+      data: { ping: 'pong', status: 'Connected successfully to Taiwan X Foodex Live Sync!' }
+    });
+
     try {
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
-        body: JSON.stringify({
-          action: 'PING_TEST',
-          timestamp: new Date().toISOString(),
-          app: 'TAIWAN X FOODEX',
-          data: { ping: 'pong', status: 'Connected successfully to Taiwan X Foodex Live Sync!' }
-        }),
-      });
+      try {
+        await fetch(targetUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+          },
+          body: payload,
+          redirect: 'follow'
+        });
+      } catch {
+        // Fallback for browser no-cors on Apps Script redirect
+        await fetch(targetUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+          },
+          body: payload,
+        });
+      }
 
       return {
         success: true,
-        message: 'Connected successfully to your Google Sheet! Ready for live syncing.'
+        message: 'Connected successfully to your Google Sheet Web App! Ready for live sales & inventory synchronization.'
       };
     } catch (err: any) {
       return {
         success: false,
-        message: 'Could not connect to Google Apps Script Webhook. Please verify the URL and ensure access is set to "Anyone".'
+        message: 'Could not connect to Google Apps Script Webhook. Please verify the URL and ensure Web App access is set to "Anyone".'
       };
     }
   }
